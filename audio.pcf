@@ -1,0 +1,15 @@
+set_io clk 129
+
+set_io io_audio 34
+
+set_io reset 128
+
+set_io -nowarn io_leds[0] 143
+set_io -nowarn io_leds[1] 114
+set_io -nowarn io_leds[2] 112
+set_io -nowarn io_leds[3] 107
+set_io -nowarn io_leds[4] 144
+set_io -nowarn io_leds[5] 113
+set_io -nowarn io_leds[6] 110
+set_io -nowarn io_leds[7] 106
+
