@@ -10,6 +10,21 @@ class SongPlayer(dataBits: Int = 12) extends Component {
     val dout = out SInt(dataBits bits)
   }
 
+  val numRowsPerBar = 16
+  val numBars = 8
+  val numChannels = 4
+  val numPatterns = 10
+  val songLength = 24
+  
+  val barRom = Mem(UInt(8 bits), wordCount=numBars*numRowsPerBar)
+  barRom.initialContent = Tools.readmemh("example_song_bars.rom")
+
+  val patternRom = Mem(UInt(8 bits), wordCount=numPatterns*numChannels)
+  patternRom.initialContent = Tools.readmemh("example_song_patterns.rom")
+
+  val songRom = Mem(UInt(8 bits), wordCount=songLength)
+  songRom.initialContent = Tools.readmemh("example_song_pattern_map.rom")
+
   val tune = Array(U(1), U(1), U(8), U(8), U(10), U(10), U(8), U(0))
   val notes = Array(U(0), U(17557), U(18601), U(19709), U(20897), U(22121), U(23436), U(24830),
                    U(26306), U(27871),U(29528), U(31234), U(33144))
@@ -21,13 +36,17 @@ class SongPlayer(dataBits: Int = 12) extends Component {
 
   val channel1 = new Voice(outputBits = dataBits)
   channel1.io.sampleClk := io.sampleClk
-  io.dout := channel1.io.dout
   channel1.io.pulseWidth := 2048
   channel1.io.waveFormEnable := B"0110"
   channel1.io.attack := U"0011"
   channel1.io.decay := U"0000"
   channel1.io.sustain := U"1111"
   channel1.io.release := U"0110"
+
+  val filter = new FilterEwma(dataBits = dataBits)
+  filter.io.sAlpha := 20
+  filter.io.din := channel1.io.dout
+  io.dout := filter.io.dout
 
   val tickDomain = new ClockDomain(clock=io.tickClk) 
 
