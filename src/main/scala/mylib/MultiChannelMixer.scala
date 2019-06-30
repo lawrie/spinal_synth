@@ -21,18 +21,12 @@ class MultiChannelMixer(dataBits: Int = 12, activeChannels: Int = 2) extends Com
   }
   
   val extraBitsRequired = log2Up(activeChannels)
-  val maxValue = (1 << dataBits - 1) - 1
-  val minValue = - (1 << dataBits - 1)
+  val n = dataBits + extraBitsRequired
 
-  val sum = (io.a + io.b + io.c + io.d + io.e + io.f + io.g + 
-    io.h + io.i + io.j + io.k + io.l) >> extraBitsRequired
+  val sum = (io.a.resize(n) + io.b.resize(n) + io.c.resize(n) + io.d.resize(n) + 
+              io.e.resize(n) + io.f.resize(n) + io.g.resize(n) + io.h.resize(n) + 
+              io.i.resize(n) + io.j.resize(n) + io.k.resize(n) + io.l.resize(n)) >> extraBitsRequired
 
-  when (sum < minValue) {
-    io.dout := minValue
-  } elsewhen (sum > maxValue) {
-    io.dout := maxValue
-  } otherwise {
-    io.dout := sum
-  }
+  io.dout := sum
 }
 
