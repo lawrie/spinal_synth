@@ -37,10 +37,10 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   bass.io.sampleClk := io.sampleClk
   bass.io.pulseWidth := 2048
   bass.io.waveFormEnable := B"0110"
-  bass.io.attack := U"0011"
-  bass.io.decay := U"0000"
-  bass.io.sustain := U"1111"
-  bass.io.release := U"0110"
+  bass.io.attack := U"0100"
+  bass.io.decay := U"0010"
+  bass.io.sustain := U"0100"
+  bass.io.release := U"1100"
   bass.io.gate := instrumentGate(0)
 
   val kickDrum = new Voice(outputBits = dataBits)
@@ -73,7 +73,7 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   highHat.io.decay := U"0001"
   highHat.io.sustain := U"0100"
   highHat.io.release := U"1000"
-  highHat.io.toneFreq := 3000
+  highHat.io.toneFreq := 43000
   highHat.io.gate := instrumentGate(2)
 
   val snare = new Voice(outputBits = dataBits)
