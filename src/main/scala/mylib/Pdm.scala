@@ -55,9 +55,10 @@ class PdmTest(dataBits: Int = 12) extends Component {
     songPlayer.io.tickClk := tickClk.io.cout
 
     pdm.io.din := songPlayer.io.dout addTag(crossClockDomain)
+    io.leds := songPlayer.io.diag
   }
 
-  io.leds := pdm.io.accOut(12 downto 5).asBits
+  //io.leds := pdm.io.accOut(12 downto 5).asBits
   io.audio := pdm.io.dout
 }
 

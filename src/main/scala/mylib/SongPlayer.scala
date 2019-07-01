@@ -8,6 +8,7 @@ class SongPlayer(dataBits: Int = 12) extends Component {
     val sampleClk = in Bool
     val tickClk = in Bool
     val dout = out SInt(dataBits bits)
+    val diag = out Bits(8 bits)
   }
 
   // Song parameters
@@ -27,10 +28,10 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   songRom.initialContent = Tools.readmemh("example_song_pattern_map.rom")
 
   val notes = Array(U(0), U(17557), U(18601), U(19709), U(20897), U(22121), U(23436), U(24830),
-                   U(26306), U(27871),U(29528), U(31234), U(33144))
+                    U(26306), U(27871),U(29528), U(31234), U(33144))
   val notesRom = Mem(UInt(16 bits), notes)
 
-  val instrumentGate = Reg(Bits(4 bits))
+  val instrumentGate = Reg(Bits(numChannels bits))
 
   // Voices
   val bass = new Voice(outputBits = dataBits)
@@ -121,8 +122,8 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   val tickArea = new ClockingArea(tickDomain) {
     val toneFreq = Reg(UInt(16 bits))
     val tickTimer = Reg(UInt(3 bits))
-    val songPosition = Reg(UInt(8 bits)) 
-    val barPosition = Reg(UInt(8 bits)) 
+    val songPosition = Reg(UInt(log2Up(songLength) bits)) 
+    val barPosition = Reg(UInt(log2Up(numRowsPerBar) bits))
     val gate = Reg(Bool)
     val currentNote = Reg(UInt(8 bits))
     
@@ -131,8 +132,10 @@ class SongPlayer(dataBits: Int = 12) extends Component {
     def currentNoteForChannel(ch: UInt): UInt = barRom(((currentBarForChannel(ch) * numRowsPerBar) + barPosition).resized)
     def currentFreqForChannel(ch: UInt): UInt = {
       val note = currentNoteForChannel(ch)
-      notesRom((note >> 4) & 0xf) >> (6 - (note & 0xf))
+      notesRom(note(7 downto 4)) |>> (6 - note(3 downto 0))
     }
+
+    io.diag := (barPosition ## tickTimer).resized
 
     bass.io.toneFreq := toneFreq addTag(crossClockDomain)
 
