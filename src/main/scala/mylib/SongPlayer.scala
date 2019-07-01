@@ -117,13 +117,13 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   io.dout := flanger.io.dout
   
   // Play the song in a slow tick domain
-  val tickDomain = new ClockDomain(clock=io.tickClk) 
+  val tickDomain = new ClockDomain(clock=io.tickClk, reset=clockDomain.reset) 
 
   val tickArea = new ClockingArea(tickDomain) {
     val toneFreq = Reg(UInt(16 bits))
-    val tickTimer = Reg(UInt(3 bits))
-    val songPosition = Reg(UInt(log2Up(songLength) bits)) 
-    val barPosition = Reg(UInt(log2Up(numRowsPerBar) + 1 bits))
+    val tickTimer = Reg(UInt(3 bits)) init 0
+    val songPosition = Reg(UInt(log2Up(songLength) bits)) init 0
+    val barPosition = Reg(UInt(log2Up(numRowsPerBar) + 1 bits)) init 0
     val gate = Reg(Bool)
     val currentNote = Reg(Vec(UInt(8 bits), numChannels))
     
