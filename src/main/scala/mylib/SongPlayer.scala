@@ -30,11 +30,6 @@ class SongPlayer(dataBits: Int = 12) extends Component {
                    U(26306), U(27871),U(29528), U(31234), U(33144))
   val notesRom = Mem(UInt(16 bits), notes)
 
-  //val tune = Array(U(1), U(1), U(8), U(8), U(10), U(10), U(8), U(0))
-  //val tuneRom = Mem(UInt(4 bits), tune)
-  
-  //val instrumentFrequency = Reg(Vec(UInt(16 bits), 4))
-  
   val instrumentGate = Reg(Bits(4 bits))
 
   // Voices
@@ -58,7 +53,6 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   kickDrum.io.release := U"0110"
   kickDrum.io.toneFreq := 1383
   kickDrum.io.gate := instrumentGate(1)
-  //kickDrum.io.gate := False
 
   val kickDrum2 = new Voice(outputBits = dataBits)
   kickDrum2.io.sampleClk := io.sampleClk
@@ -70,7 +64,6 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   kickDrum2.io.release := U"0000"
   kickDrum2.io.toneFreq := 18000
   kickDrum2.io.gate := instrumentGate(1)
-  //kickDrum2.io.gate := False
 
   val highHat = new Voice(outputBits = dataBits)
   highHat.io.sampleClk := io.sampleClk
@@ -82,7 +75,6 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   highHat.io.release := U"1000"
   highHat.io.toneFreq := 3000
   highHat.io.gate := instrumentGate(2)
-  //highHat.io.gate := False
 
   val snare = new Voice(outputBits = dataBits)
   snare.io.sampleClk := io.sampleClk
@@ -94,11 +86,15 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   snare.io.release := U"0100"
   snare.io.toneFreq := 2000
   snare.io.gate := instrumentGate(3)
-  //snare.io.gate := False
+
+  // Filter
+  val filter = new FilterEwma(dataBits = dataBits)
+  filter.io.sAlpha := 20
+  filter.io.din := bass.io.dout
 
   // Mixer
   val mixer = new MultiChannelMixer(dataBits = dataBits, activeChannels = 5)
-  mixer.io.a := bass.io.dout
+  mixer.io.a := filter.io.dout
   mixer.io.b := kickDrum.io.dout
   mixer.io.c := kickDrum2.io.dout
   mixer.io.d := highHat.io.dout
@@ -111,19 +107,15 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   mixer.io.k := 0
   mixer.io.l := 0
 
-  // Filter
-  val filter = new FilterEwma(dataBits = dataBits)
-  filter.io.sAlpha := 20
-  filter.io.din := mixer.io.dout
-  io.dout := filter.io.dout
-
+  // Final output
+  io.dout := mixer.io.dout
+  
   // Play the song in a slow tick domain
   val tickDomain = new ClockDomain(clock=io.tickClk) 
 
   val tickArea = new ClockingArea(tickDomain) {
     val toneFreq = Reg(UInt(16 bits))
     val tickTimer = Reg(UInt(2 bits))
-    //val noteCounter = Reg(UInt(3 bits)) 
     val songPosition = Reg(UInt(8 bits)) 
     val barPosition = Reg(UInt(8 bits)) 
     val gate = Reg(Bool)
@@ -156,10 +148,8 @@ class SongPlayer(dataBits: Int = 12) extends Component {
       }
       
       gate := True
-      //toneFreq := notesRom(tuneRom(noteCounter))
       toneFreq := currentFreqForChannel(0).resized
       currentNote := currentNoteForChannel(0)
-      //noteCounter := noteCounter + 1
     } elsewhen (tickTimer === 3) {
       gate := False
     }
