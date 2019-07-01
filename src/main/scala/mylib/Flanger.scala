@@ -33,7 +33,7 @@ class Flanger(delayBufferLengthBits: Int = 8, sampleBits: Int = 12, sampleRate: 
   val accumulator = Reg(UInt(accumulatorBits bits))
   val delayBufferWriteAddress = Reg(UInt(8 bits))
 
-  val delayTapOutput = Reg(SInt(sampleBits bit))
+  val delayTapOutput = Reg(SInt(sampleBits+1 bit))
 
   val delayBufferTemp = accumulator(accumulatorBits -2 downto accumulatorBits - 1 - delayBufferLengthBits)
   val delayBufferTapIndex = accumulator.msb ? ~delayBufferTemp | delayBufferTemp
@@ -59,6 +59,6 @@ class Flanger(delayBufferLengthBits: Int = 8, sampleBits: Int = 12, sampleRate: 
     delayBufferWriteAddress := delayBufferWriteAddress + 1
     accumulator := accumulator + accumulatorPhaseIncrement
     
-    io.dout := (io.din + delayTapOutput) >> 1
+    io.dout := (io.din.resize(sampleBits+1) + delayTapOutput) >> 1
   }
 }

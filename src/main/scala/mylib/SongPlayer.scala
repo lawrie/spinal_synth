@@ -107,8 +107,13 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   mixer.io.k := 0
   mixer.io.l := 0
 
+  // Flanger
+  val flanger = new Flanger(sampleBits = dataBits)
+  flanger.io.sampleClk := io.sampleClk
+  flanger.io.din := mixer.io.dout
+
   // Final output
-  io.dout := mixer.io.dout
+  io.dout := flanger.io.dout
   
   // Play the song in a slow tick domain
   val tickDomain = new ClockDomain(clock=io.tickClk) 
