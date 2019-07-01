@@ -120,7 +120,7 @@ class SongPlayer(dataBits: Int = 12) extends Component {
 
   val tickArea = new ClockingArea(tickDomain) {
     val toneFreq = Reg(UInt(16 bits))
-    val tickTimer = Reg(UInt(2 bits))
+    val tickTimer = Reg(UInt(3 bits))
     val songPosition = Reg(UInt(8 bits)) 
     val barPosition = Reg(UInt(8 bits)) 
     val gate = Reg(Bool)
