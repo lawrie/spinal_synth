@@ -25,8 +25,8 @@ class Envelope(accumulatorBits : Int = 26, sampleClkFreq: Int = 44100)  extends 
   val prevGate = Reg(Bool)
 
   val overflow = accumulator.msb
-  val decTmp = Reg(UInt(17 bits))
-  val relTmp = Reg(UInt(17 bits))
+  val decTmp = Reg(UInt(20 bits))
+  val relTmp = Reg(UInt(20 bits))
 
   val accumulatorSize = 1 << accumulatorBits
   val accumulatorMax = accumulatorSize - 1
@@ -49,8 +49,8 @@ class Envelope(accumulatorBits : Int = 26, sampleClkFreq: Int = 44100)  extends 
     U(calculatePhaseIncrement(decayIncs(i)))
   }
 
-  val attackRom = Mem(UInt(17 bits), attackTable)
-  val decayRom = Mem(UInt(17 bits), decayTable)
+  val attackRom = Mem(UInt(20 bits), attackTable)
+  val decayRom = Mem(UInt(20 bits), decayTable)
 
   val expDecayRom = Mem(UInt(8 bits), wordCount = 256)
   expDecayRom.initialContent = Tools.readmemh("exp_lookup_table.rom")

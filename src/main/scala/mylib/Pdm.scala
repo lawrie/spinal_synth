@@ -39,7 +39,7 @@ class PdmTest(dataBits: Int = 12) extends Component {
 
   val clockHz = 100000000
   val bpm = 120
-  val tickHz = ((bpm * 4) / 60)
+  val tickHz = (((bpm * 4) / 60) * 2.0).toInt
   //val tickHz = 1000000
 
   val oneMHzClk = new ClkDivider(clockHz / 1000000)

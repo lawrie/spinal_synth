@@ -10,11 +10,11 @@ class AmplitudeModulator(dataBits: Int = 12, amplitudeBits: Int = 8) extends Com
     val dout = out SInt(dataBits bits)
   }
 
-  val ampSigned = io.amplitude.asSInt
+  val ampSigned = (B"0" ## io.amplitude).asSInt
 
   val scaledDin = Reg(SInt(dataBits + amplitudeBits bits))
 
-  scaledDin := io.din * ampSigned
+  scaledDin := (io.din * ampSigned).resized
 
   io.dout := scaledDin(amplitudeBits + dataBits - 1 downto amplitudeBits)
 }

@@ -27,17 +27,17 @@ class Voice(outputBits: Int = 12, freqBits: Int = 16,
   envelope.io.gate := io.gate
 
   val toneGenerator = new ToneGenerator(
-    accumulatorBits=accumulatorBits, 
-    pulseWidthBits=pulseWidthBits, 
-    outputBits=outputBits,
-    freqBits=freqBits)
+    accumulatorBits = accumulatorBits, 
+    pulseWidthBits = pulseWidthBits, 
+    outputBits = outputBits,
+    freqBits = freqBits)
 
   toneGenerator.io.toneFreq := io.toneFreq
   toneGenerator.io.pulseWidth := io.pulseWidth
   toneGenerator.io.sampleClk := io.sampleClk
-  toneGenerator.io.enPulse := io.gate & io.waveFormEnable(2)
-  toneGenerator.io.enSaw := io.gate & io.waveFormEnable(1)
   toneGenerator.io.enTriangle := io.gate & io.waveFormEnable(0)
+  toneGenerator.io.enSaw := io.gate & io.waveFormEnable(1)
+  toneGenerator.io.enPulse := io.gate & io.waveFormEnable(2)
   toneGenerator.io.enNoise := io.gate & io.waveFormEnable(3)
 
   val amplitudeModulator = new AmplitudeModulator()
