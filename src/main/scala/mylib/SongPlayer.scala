@@ -123,11 +123,11 @@ class SongPlayer(dataBits: Int = 12) extends Component {
     val toneFreq = Reg(UInt(16 bits))
     val tickTimer = Reg(UInt(3 bits))
     val songPosition = Reg(UInt(log2Up(songLength) bits)) 
-    val barPosition = Reg(UInt(log2Up(numRowsPerBar) bits))
+    val barPosition = Reg(UInt(log2Up(numRowsPerBar) + 1 bits))
     val gate = Reg(Bool)
-    val currentNote = Reg(UInt(8 bits))
+    val currentNote = Reg(Vec(UInt(8 bits), numChannels))
     
-    def currentPatternIdx(): UInt = songRom(songPosition.resized)
+    def currentPatternIdx(): UInt = songRom(songPosition)
     def currentBarForChannel(ch: UInt): UInt = patternRom(((currentPatternIdx() * numChannels) + ch).resized)
     def currentNoteForChannel(ch: UInt): UInt = barRom(((currentBarForChannel(ch) * numRowsPerBar) + barPosition).resized)
     def currentFreqForChannel(ch: UInt): UInt = {
@@ -135,14 +135,15 @@ class SongPlayer(dataBits: Int = 12) extends Component {
       notesRom(note(7 downto 4)) |>> (6 - note(3 downto 0))
     }
 
-    io.diag := (barPosition ## tickTimer).resized
+    //io.diag := (barPosition ## tickTimer).resized
+    io.diag := songPosition.asBits.resized
 
     bass.io.toneFreq := toneFreq addTag(crossClockDomain)
 
     tickTimer := tickTimer + 1
 
-    for (i <- 0 until 4) {
-      instrumentGate(i) := gate addTag(crossClockDomain) 
+    for (i <- 0 until numChannels) {
+      instrumentGate(i) := (gate && currentNote(i) =/= 0) addTag(crossClockDomain) 
     }
 
     when (tickTimer === 0) {
@@ -157,7 +158,7 @@ class SongPlayer(dataBits: Int = 12) extends Component {
       
       gate := True
       toneFreq := currentFreqForChannel(0).resized
-      currentNote := currentNoteForChannel(0)
+      for (i <- 0 until numChannels) currentNote(i) := currentNoteForChannel(i)
     } elsewhen (tickTimer === 3) {
       gate := False
     }
