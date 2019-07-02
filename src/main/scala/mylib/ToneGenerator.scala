@@ -37,7 +37,7 @@ class ToneGeneratorSaw(accumulatorBits: Int, outputBits: Int) extends Component 
 
 }
 
-class ToneGeneratorNoise(accumulatorBits: Int, outputBits: Int) extends Component {
+class ToneGeneratorNoise(accumulatorBits: Int = 24, outputBits: Int = 12) extends Component {
   val io = new Bundle {
     val accumulator = in UInt(accumulatorBits bits)
     val dout = out UInt(outputBits bits)
@@ -47,11 +47,11 @@ class ToneGeneratorNoise(accumulatorBits: Int, outputBits: Int) extends Componen
 
   lfsr := lfsr(21 downto 0) ## (lfsr(22) ^ lfsr(17))
 
-  io.dout := (lfsr(22) ## lfsr(20) ## lfsr(16) ## lfsr(13) ## lfsr(11) ## lfsr(7) ## lfsr(4) ## lfsr(2) ## B(0, outputBits bits)).asUInt.resized
+  io.dout := (lfsr(22) ## lfsr(20) ## lfsr(16) ## lfsr(13) ## lfsr(11) ## lfsr(7) ## lfsr(4) ## lfsr(2) ## B(0, outputBits - 8 bits)).asUInt
 
 }
 
-class ToneGenerator(accumulatorBits: Int, pulseWidthBits: Int, outputBits: Int, freqBits: Int) extends Component {
+class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputBits: Int = 12, freqBits: Int = 16) extends Component {
   val io = new Bundle {
     val sampleClk = in Bool
     val pulseWidth = in UInt(pulseWidthBits bits)
@@ -108,6 +108,63 @@ class ToneGenerator(accumulatorBits: Int, pulseWidthBits: Int, outputBits: Int, 
     }
 
     io.dout := doutTemp.asSInt addTag(crossClockDomain)
+  }
+}
+
+class ToneTest(outputBits: Int = 12) extends Component {
+  val io = new Bundle {
+    val audio = out Bool
+    val leds = out Bits(8 bits)
+    val switches = in Bits(4 bits)
+    val quadA = in Bool
+    val quadB = in Bool
+  }
+
+  val clockHz = 100000000
+
+  val oneMHzClk = new ClkDivider(clockHz / 1000000)
+  val sampleClk = new ClkDivider(clockHz / 44100)
+
+  val oneMHzDomain = new ClockDomain(clock=oneMHzClk.io.cout, reset=clockDomain.reset)
+  val pdm = new Pdm(outputBits)
+
+  val oneMHzArea = new ClockingArea(oneMHzDomain) {
+    val quad = new Quad(16)
+    quad.io.initValue := 1000
+    quad.io.quadA := io.quadA
+    quad.io.quadB := io.quadB
+    
+    val toneGenerator = new ToneGenerator(outputBits = outputBits)
+    toneGenerator.io.sampleClk := sampleClk.io.cout
+    toneGenerator.io.pulseWidth := 1000
+    toneGenerator.io.toneFreq := quad.io.position
+    toneGenerator.io.enPulse := io.switches(0)
+    toneGenerator.io.enNoise := io.switches(1)
+    toneGenerator.io.enSaw := io.switches(2)
+    toneGenerator.io.enTriangle := io.switches(3)
+
+    pdm.io.din := toneGenerator.io.dout addTag(crossClockDomain)
+    io.leds := toneGenerator.io.dout.asBits.resized
+  }
+
+  io.audio := pdm.io.dout
+}
+
+object ToneTest {
+  def main(args: Array[String]) {
+    SpinalVerilog(new ToneTest(12))
+  }
+}
+
+object ToneSim {
+  import spinal.core.sim._
+
+  def main(args: Array[String]) {
+    SimConfig.withWave.compile(new ToneTest(12)).doSim{ dut =>
+      dut.clockDomain.forkStimulus(100)
+
+      dut.clockDomain.waitSampling(100000)
+    }
   }
 }
 

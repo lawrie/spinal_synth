@@ -13,3 +13,15 @@ set_io -nowarn io_leds[5] 113
 set_io -nowarn io_leds[6] 110
 set_io -nowarn io_leds[7] 106
 
+set_io -nowarn io_switches[0] 37
+set_io -nowarn io_switches[1] 38
+set_io -nowarn io_switches[2] 39
+set_io -nowarn io_switches[3] 41
+
+set_io -nowarn io_buttons[0] 63
+set_io -nowarn io_buttons[1] 64
+
+set_io -nowarn io_quadA 20
+set_io -nowarn io_quadB 19
+
+
