@@ -37,9 +37,8 @@ class ToneGeneratorSaw(accumulatorBits: Int, outputBits: Int) extends Component 
 
 }
 
-class ToneGeneratorNoise(accumulatorBits: Int = 24, outputBits: Int = 12) extends Component {
+class ToneGeneratorNoise( outputBits: Int = 12) extends Component {
   val io = new Bundle {
-    val accumulator = in UInt(accumulatorBits bits)
     val dout = out UInt(outputBits bits)
   }
 
@@ -64,9 +63,9 @@ class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputB
   }
 
   val accumulator = Reg(UInt(accumulatorBits bits))
-  val prevAccumulator = Reg(UInt(accumulatorBits bits))
+  //val prevAccumulator = Reg(UInt(accumulatorBits bits))
 
-  prevAccumulator := accumulator
+  //prevAccumulator := accumulator
   accumulator := accumulator + io.toneFreq
 
   val pulse = new ToneGeneratorPulse(accumulatorBits, pulseWidthBits, outputBits)
@@ -79,35 +78,21 @@ class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputB
   val saw = new ToneGeneratorSaw(accumulatorBits, outputBits)
   saw.io.accumulator := accumulator
 
-  val noise = new ToneGeneratorNoise(accumulatorBits, outputBits)
-  noise.io.accumulator := accumulator
+  val noise = new ToneGeneratorNoise(outputBits)
 
   val sampleDomain = ClockDomain( clock=io.sampleClk)
 
   val sampleArea = new ClockingArea(sampleDomain) {
-    val doutTemp = UInt(outputBits bits)
-    val doutReg = Reg(UInt(outputBits bits))
-    doutReg := doutTemp addTag(crossClockDomain)
+    val doutReg = Reg(SInt(outputBits bits))
 
-    doutTemp := (1 << outputBits) - 1
-    
-    when (io.enPulse) {
-      doutTemp := pulse.io.dout ^ (1 << (outputBits - 1)) addTag(crossClockDomain)
-    }
+    val doutTemp1 = (io.enNoise ? noise.io.dout | U((1 << outputBits) - 1))
+    val doutTemp2 = (io.enSaw ? (saw.io.dout & doutTemp1) | doutTemp1)
+    val doutTemp3 = (io.enTriangle ? (triangle.io.dout & doutTemp2) | doutTemp2)
+    val doutTemp4 = (io.enPulse ? (pulse.io.dout & doutTemp3) | doutTemp3) ^ U((1 << (outputBits -1)))
 
-    when (io.enTriangle) {
-      doutTemp := triangle.io.dout ^ (1 << (outputBits - 1)) addTag(crossClockDomain)
-    }
+    doutReg := doutTemp4.asSInt
 
-    when (io.enSaw) {
-      doutTemp := saw.io.dout ^ (1 << (outputBits - 1)) addTag(crossClockDomain)
-    }
-
-    when (io.enNoise) {
-      doutTemp := noise.io.dout ^ (1 << (outputBits - 1)) addTag(crossClockDomain)
-    }
-
-    io.dout := doutTemp.asSInt addTag(crossClockDomain)
+    io.dout := doutReg addTag(crossClockDomain)
   }
 }
 

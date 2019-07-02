@@ -3,7 +3,7 @@ package mylib
 import spinal.core._
 import spinal.lib._
 
-class SongPlayer(dataBits: Int = 12) extends Component {
+class SongPlayer(dataBits: Int = 12, freqBits: Int = 16) extends Component {
   val io = new Bundle {
     val sampleClk = in Bool
     val tickClk = in Bool
@@ -29,14 +29,14 @@ class SongPlayer(dataBits: Int = 12) extends Component {
 
   val notes = Array(U(0), U(17557), U(18601), U(19709), U(20897), U(22121), U(23436), U(24830),
                     U(26306), U(27871),U(29528), U(31234), U(33144))
-  val notesRom = Mem(UInt(16 bits), notes)
+  val notesRom = Mem(UInt(freqBits bits), notes)
 
   val instrumentGate = Reg(Bits(numChannels bits))
 
   // Voices
   val bass = new Voice(outputBits = dataBits)
   bass.io.sampleClk := io.sampleClk
-  bass.io.pulseWidth := 2048
+  bass.io.pulseWidth :=  2048
   bass.io.waveFormEnable := B"0110"
   bass.io.attack := U"0100"
   bass.io.decay := U"0010"
@@ -120,15 +120,16 @@ class SongPlayer(dataBits: Int = 12) extends Component {
   val tickDomain = new ClockDomain(clock=io.tickClk, reset=clockDomain.reset) 
 
   val tickArea = new ClockingArea(tickDomain) {
-    val toneFreq = Reg(UInt(16 bits))
+    val toneFreq = Reg(UInt(freqBits bits))
     val tickTimer = Reg(UInt(3 bits)) init 0
     val songPosition = Reg(UInt(log2Up(songLength) bits)) init 0
     val barPosition = Reg(UInt(log2Up(numRowsPerBar) + 1 bits)) init 0
     val gate = Reg(Bool)
     val currentNote = Reg(Vec(UInt(8 bits), numChannels))
+    val pattern = Reg(UInt(8 bits))
     
     def currentPatternIdx(): UInt = songRom(songPosition)
-    def currentBarForChannel(ch: UInt): UInt = patternRom(((currentPatternIdx() * numChannels) + ch).resized)
+    def currentBarForChannel(ch: UInt): UInt = patternRom(((pattern * numChannels) + ch).resized)
     def currentNoteForChannel(ch: UInt): UInt = barRom(((currentBarForChannel(ch) * numRowsPerBar) + barPosition).resized)
     def currentFreqForChannel(ch: UInt): UInt = {
       val note = currentNoteForChannel(ch)
@@ -136,7 +137,9 @@ class SongPlayer(dataBits: Int = 12) extends Component {
     }
 
     //io.diag := (barPosition ## tickTimer).resized
-    io.diag := songPosition.asBits.resized
+    //io.diag := songPosition.asBits.resized
+    io.diag := currentNote(3).asBits
+    //io.diag := pattern.asBits
 
     bass.io.toneFreq := toneFreq addTag(crossClockDomain)
 
@@ -148,16 +151,17 @@ class SongPlayer(dataBits: Int = 12) extends Component {
 
     when (tickTimer === 0) {
       barPosition := barPosition + 1
-      when (barPosition >= numRowsPerBar) {
+      when (barPosition >= numRowsPerBar - 1) {
         barPosition := 0
         songPosition := songPosition + 1
-        when (songPosition >= songLength) {
+        when (songPosition >= songLength - 1) {
           songPosition := 0
         }
       }
       
       gate := True
       toneFreq := currentFreqForChannel(0).resized
+      pattern := currentPatternIdx
       for (i <- 0 until numChannels) currentNote(i) := currentNoteForChannel(i)
     } elsewhen (tickTimer === 3) {
       gate := False
