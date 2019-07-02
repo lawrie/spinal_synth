@@ -3,7 +3,7 @@ package mylib
 import spinal.core._
 import spinal.lib._
 
-class ToneGeneratorPulse(accumulatorBits: Int, pulseWidthBits: Int, outputBits: Int) extends Component {
+class ToneGeneratorPulse(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputBits: Int = 12) extends Component {
   val io = new Bundle {
     val accumulator = in UInt(accumulatorBits bits)
     val pulseWidth = in UInt(pulseWidthBits bits)
@@ -12,10 +12,10 @@ class ToneGeneratorPulse(accumulatorBits: Int, pulseWidthBits: Int, outputBits: 
 
   val maxScale = (1 << outputBits) - 1
 
-  io.dout := (io.accumulator(accumulatorBits - 1 downto accumulatorBits - pulseWidthBits) < io.pulseWidth) ? U(maxScale) | U(0)
+  io.dout := (io.accumulator(accumulatorBits - 1 downto accumulatorBits - pulseWidthBits) <= io.pulseWidth) ? U(maxScale) | U(0)
 }
 
-class ToneGeneratorTriangle(accumulatorBits: Int, outputBits: Int) extends Component {
+class ToneGeneratorTriangle(accumulatorBits: Int = 24, outputBits: Int = 12) extends Component {
   val io = new Bundle {
     val accumulator = in UInt(accumulatorBits bits)
     val dout = out UInt(outputBits bits)
@@ -27,7 +27,7 @@ class ToneGeneratorTriangle(accumulatorBits: Int, outputBits: Int) extends Compo
   io.dout := invert ? ~bits | bits
 }
 
-class ToneGeneratorSaw(accumulatorBits: Int, outputBits: Int) extends Component {
+class ToneGeneratorSaw(accumulatorBits: Int = 24, outputBits: Int = 12) extends Component {
   val io = new Bundle {
     val accumulator = in UInt(accumulatorBits bits)
     val dout = out UInt(outputBits bits)
@@ -37,7 +37,7 @@ class ToneGeneratorSaw(accumulatorBits: Int, outputBits: Int) extends Component 
 
 }
 
-class ToneGeneratorNoise( outputBits: Int = 12) extends Component {
+class ToneGeneratorNoise(outputBits: Int = 12) extends Component {
   val io = new Bundle {
     val dout = out UInt(outputBits bits)
   }
@@ -114,15 +114,15 @@ class ToneTest(outputBits: Int = 12) extends Component {
   val pdm = new Pdm(outputBits)
 
   val oneMHzArea = new ClockingArea(oneMHzDomain) {
-    val quad = new Quad(16)
+    val quad = new Quad(12)
     quad.io.initValue := 1000
     quad.io.quadA := io.quadA
     quad.io.quadB := io.quadB
     
     val toneGenerator = new ToneGenerator(outputBits = outputBits)
     toneGenerator.io.sampleClk := sampleClk.io.cout
-    toneGenerator.io.pulseWidth := 1000
-    toneGenerator.io.toneFreq := quad.io.position
+    toneGenerator.io.pulseWidth := quad.io.position
+    toneGenerator.io.toneFreq := 1000
     toneGenerator.io.enPulse := io.switches(0)
     toneGenerator.io.enNoise := io.switches(1)
     toneGenerator.io.enSaw := io.switches(2)
