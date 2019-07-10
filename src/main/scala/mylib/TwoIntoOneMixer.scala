@@ -10,8 +10,8 @@ class TwoIntoOneMixer(dataBits: Int = 12) extends Component {
     val dout = out SInt(dataBits bits)
   }
   
-  val intermediate = io.a + io.b
+  val intermediate = (io.a).resize(dataBits +1) + io.b.resize(dataBits+1)
 
-  io.dout := intermediate >> 1
+  io.dout := (intermediate >> 1)
 }
 

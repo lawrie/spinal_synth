@@ -24,4 +24,4 @@ set_io -nowarn io_buttons[1] 64
 set_io -nowarn io_quadA 20
 set_io -nowarn io_quadB 19
 
-
+set_io -nowarn -pullup yes io_gate 10

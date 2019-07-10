@@ -84,8 +84,8 @@ class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputB
 
   val sampleArea = new ClockingArea(sampleDomain) {
     val doutReg = Reg(SInt(outputBits bits))
-
-    val doutTemp1 = (io.enNoise ? noise.io.dout | U((1 << outputBits) - 1))
+    val doutTemp1 = Reg(UInt(outputBits bits))
+    doutTemp1 := (io.enNoise ? noise.io.dout | U((1 << outputBits) - 1)) addTag(crossClockDomain)
     val doutTemp2 = (io.enSaw ? (saw.io.dout & doutTemp1) | doutTemp1)
     val doutTemp3 = (io.enTriangle ? (triangle.io.dout & doutTemp2) | doutTemp2)
     val doutTemp4 = (io.enPulse ? (pulse.io.dout & doutTemp3) | doutTemp3) ^ U((1 << (outputBits -1)))
