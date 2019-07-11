@@ -1,4 +1,4 @@
-VERILOG = Chord.v
+VERILOG ?= PdmTest.v
 PCF = audio.pcf
 
 prog : bin/toplevel.bin

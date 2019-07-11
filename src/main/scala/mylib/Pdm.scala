@@ -33,33 +33,44 @@ class ClkDivider(divisor: Int) extends Component {
 
 class PdmTest(dataBits: Int = 12) extends Component {
   val io = new Bundle {
+    val clk = in Bool
     val audio = out Bool
     val leds = out Bits(8 bits)
   }
 
-  val clockHz = 100000000
-  val bpm = 120
-  val tickHz = ((bpm * 4) / 60) * 8
-  //val tickHz = 1000000
+  val pdmClockDomain = new ClockDomain(
+    clock=io.clk,
+    config = ClockDomainConfig(resetKind=BOOT)
+  )
 
-  val oneMHzClk = new ClkDivider(clockHz / 1000000)
-  val sampleClk = new ClkDivider(clockHz / 44100)
-  val tickClk = new ClkDivider(clockHz / tickHz)
+  val pdmArea = new ClockingArea(pdmClockDomain) {
+    val clockHz = 100000000
+    val bpm = 120
+    val tickHz = ((bpm * 4) / 60) * 8
+    //val tickHz = 1000000
 
-  val oneMHzDomain = new ClockDomain(clock=oneMHzClk.io.cout, reset=clockDomain.reset)
-  val pdm = new Pdm(dataBits)
+    val oneMHzClk = new ClkDivider(clockHz / 1000000)
+    val sampleClk = new ClkDivider(clockHz / 44100)
+    val tickClk = new ClkDivider(clockHz / tickHz)
 
-  val oneMHzArea = new ClockingArea(oneMHzDomain) {
-    val songPlayer = new SongPlayer(dataBits = 12)
-    songPlayer.io.sampleClk := sampleClk.io.cout
-    songPlayer.io.tickClk := tickClk.io.cout
+    val oneMHzDomain = new ClockDomain(
+      clock=oneMHzClk.io.cout, 
+      config=ClockDomainConfig(resetKind=BOOT)
+    )
+    val pdm = new Pdm(dataBits)
 
-    pdm.io.din := songPlayer.io.dout addTag(crossClockDomain)
-    io.leds := songPlayer.io.diag
+    val oneMHzArea = new ClockingArea(oneMHzDomain) {
+      val songPlayer = new SongPlayer(dataBits = 12)
+      songPlayer.io.sampleClk := sampleClk.io.cout
+      songPlayer.io.tickClk := tickClk.io.cout
+
+      pdm.io.din := songPlayer.io.dout addTag(crossClockDomain)
+      io.leds := songPlayer.io.diag
+    }
+
+    //io.leds := pdm.io.accOut(12 downto 5).asBits
+    io.audio := pdm.io.dout
   }
-
-  //io.leds := pdm.io.accOut(12 downto 5).asBits
-  io.audio := pdm.io.dout
 }
 
 object PdmTest {

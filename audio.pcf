@@ -1,8 +1,6 @@
-set_io clk 129
+set_io io_clk 129
 
 set_io io_audio 34
-
-set_io reset 128
 
 set_io -nowarn io_leds[0] 143
 set_io -nowarn io_leds[1] 114
@@ -24,4 +22,4 @@ set_io -nowarn io_buttons[1] 64
 set_io -nowarn io_quadA 20
 set_io -nowarn io_quadB 19
 
-set_io -nowarn -pullup yes io_gate 10
+set_io -nowarn io_gate 63

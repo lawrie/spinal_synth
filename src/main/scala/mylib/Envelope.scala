@@ -60,7 +60,7 @@ class Envelope(accumulatorBits : Int = 26, sampleClkFreq: Int = 44100)  extends 
   val amplitude = Reg(UInt(8 bits))
   io.amplitude := amplitude
 
-  val sustainVolume = (io.s ## B"0000").asUInt
+  val sustainVolume = io.s @@ U"0000"
 
   val nextState = Reg(op)
 
