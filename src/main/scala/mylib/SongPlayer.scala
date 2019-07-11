@@ -94,19 +94,12 @@ class SongPlayer(dataBits: Int = 12, freqBits: Int = 16) extends Component {
   filter.io.din := bass.io.dout
 
   // Mixer
-  val mixer = new MultiChannelMixer(dataBits = dataBits, activeChannels = 5)
-  mixer.io.a := filter.io.dout
-  mixer.io.b := kickDrum.io.dout
-  mixer.io.c := kickDrum2.io.dout
-  mixer.io.d := highHat.io.dout
-  mixer.io.e := snare.io.dout
-  mixer.io.f := 0
-  mixer.io.g := 0
-  mixer.io.h := 0
-  mixer.io.i := 0
-  mixer.io.j := 0
-  mixer.io.k := 0
-  mixer.io.l := 0
+  val mixer = new Mixer(dataBits = dataBits, activeChannels = 5)
+  mixer.io.channel(0) := filter.io.dout
+  mixer.io.channel(1) := kickDrum.io.dout
+  mixer.io.channel(2) := kickDrum2.io.dout
+  mixer.io.channel(3) := highHat.io.dout
+  mixer.io.channel(4) := snare.io.dout
 
   // Flanger
   val flanger = new Flanger(sampleBits = dataBits)

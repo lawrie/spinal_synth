@@ -62,15 +62,12 @@ class Chord(dataBits: Int = 12) extends Component {
       voiceG.io.release := U"1100"
       voiceG.io.gate := !io.gate
 
-      val intermediateMixer = new TwoIntoOneMixer(dataBits = dataBits)
-      intermediateMixer.io.a := voiceC.io.dout
-      intermediateMixer.io.b := voiceF.io.dout
+      val mixer = new Mixer(dataBits = dataBits, activeChannels = 3)
+      mixer.io.channel(0) := voiceC.io.dout
+      mixer.io.channel(1) := voiceF.io.dout
+      mixer.io.channel(2) := voiceG.io.dout
 
-      val finalMixer = new TwoIntoOneMixer(dataBits = dataBits)
-      finalMixer.io.a := intermediateMixer.io.dout
-      finalMixer.io.b := voiceG.io.dout
-
-      pdm.io.din := finalMixer.io.dout addTag(crossClockDomain)
+      pdm.io.din := mixer.io.dout addTag(crossClockDomain)
     }
 
     io.audio := pdm.io.dout
