@@ -3,7 +3,8 @@ package mylib
 import spinal.core._
 import spinal.lib._
 
-class Chord(freq1: Int = 4389, freq2: Int = 5530, freq3: Int = 6577, dataBits: Int = 12) extends Component {
+class Chord(freq1: Int = 4389, freq2: Int = 5530, freq3: Int = 6577, 
+            dataBits: Int = 12, clockHz: Int = 100000000) extends Component {
   val io = new Bundle {
     val clk = in Bool
     val gate = in Bool
@@ -16,8 +17,6 @@ class Chord(freq1: Int = 4389, freq2: Int = 5530, freq3: Int = 6577, dataBits: I
   )
 
   val pdmArea = new ClockingArea(pdmClockDomain) {
-
-    val clockHz = 100000000
     val oneMHzClk = new ClkDivider(clockHz / 1000000)
     val sampleClk = new ClkDivider(clockHz / 44100)
 
@@ -29,7 +28,6 @@ class Chord(freq1: Int = 4389, freq2: Int = 5530, freq3: Int = 6577, dataBits: I
     val pdm = new Pdm(dataBits)
 
     val oneMHzArea = new ClockingArea(oneMHzDomain) {
-
       def voice(freq: Int): Voice = {
         val voice = new Voice(outputBits = dataBits)
         voice.io.sampleClk := sampleClk.io.cout
