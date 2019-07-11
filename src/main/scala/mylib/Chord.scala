@@ -3,7 +3,7 @@ package mylib
 import spinal.core._
 import spinal.lib._
 
-class Chord(dataBits: Int = 12) extends Component {
+class Chord(freq1: Int = 4389, freq2: Int = 5530, freq3: Int = 6577, dataBits: Int = 12) extends Component {
   val io = new Bundle {
     val clk = in Bool
     val gate = in Bool
@@ -29,43 +29,30 @@ class Chord(dataBits: Int = 12) extends Component {
     val pdm = new Pdm(dataBits)
 
     val oneMHzArea = new ClockingArea(oneMHzDomain) {
-      val voiceC = new Voice(outputBits = dataBits)
-      voiceC.io.sampleClk := sampleClk.io.cout
-      voiceC.io.toneFreq := 4389
-      voiceC.io.pulseWidth :=  2047
-      voiceC.io.waveFormEnable := B"0001"
-      voiceC.io.attack := U"0010"
-      voiceC.io.decay := U"0010"
-      voiceC.io.sustain := U"1000"
-      voiceC.io.release := U"1100"
-      voiceC.io.gate := !io.gate
 
-      val voiceF = new Voice(outputBits = dataBits)
-      voiceF.io.sampleClk := sampleClk.io.cout
-      voiceF.io.toneFreq := 5530
-      voiceF.io.pulseWidth :=  2047
-      voiceF.io.waveFormEnable := B"0001"
-      voiceF.io.attack := U"0010"
-      voiceF.io.decay := U"0010"
-      voiceF.io.sustain := U"1000"
-      voiceF.io.release := U"1100"
-      voiceF.io.gate := !io.gate
+      def voice(freq: Int): Voice = {
+        val voice = new Voice(outputBits = dataBits)
+        voice.io.sampleClk := sampleClk.io.cout
+        voice.io.toneFreq := freq
+        voice.io.pulseWidth :=  2047
+        voice.io.waveFormEnable := B"0001"
+        voice.io.attack := U"0010"
+        voice.io.decay := U"0010"
+        voice.io.sustain := U"1000"
+        voice.io.release := U"1100"
+        voice.io.gate := !io.gate
 
-      val voiceG = new Voice(outputBits = dataBits)
-      voiceG.io.sampleClk := sampleClk.io.cout
-      voiceG.io.toneFreq := 6577
-      voiceG.io.pulseWidth :=  2047
-      voiceG.io.waveFormEnable := B"0001"
-      voiceG.io.attack := U"0010"
-      voiceG.io.decay := U"0010"
-      voiceG.io.sustain := U"1000"
-      voiceG.io.release := U"1100"
-      voiceG.io.gate := !io.gate
+        voice
+      }
+
+      val voice1 = voice(freq1)
+      val voice2 = voice(freq2)
+      val voice3 = voice(freq3)
 
       val mixer = new Mixer(dataBits = dataBits, activeChannels = 3)
-      mixer.io.channel(0) := voiceC.io.dout
-      mixer.io.channel(1) := voiceF.io.dout
-      mixer.io.channel(2) := voiceG.io.dout
+      mixer.io.channel(0) := voice1.io.dout
+      mixer.io.channel(1) := voice2.io.dout
+      mixer.io.channel(2) := voice3.io.dout
 
       pdm.io.din := mixer.io.dout addTag(crossClockDomain)
     }
@@ -76,6 +63,6 @@ class Chord(dataBits: Int = 12) extends Component {
 
 object ChordTest {
   def main(args: Array[String]) {
-    SpinalVerilog(new Chord(12))
+    SpinalVerilog(new Chord(dataBits = 12))
   }
 }
