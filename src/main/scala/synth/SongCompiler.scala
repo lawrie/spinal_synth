@@ -5,7 +5,12 @@ import spinal.lib._
 
 class SongCompiler {
   val noteChars = "CDEFGAB"
- 
+  
+  val notes = List(U(0), U(17557), U(18601), U(19709), U(20897), U(22121), U(23436), U(24830),
+                   U(26306), U(27871),U(29528), U(31234), U(33144))
+
+  val emptyBar = List.fill(16)("")
+
   def checkNote(note: String) = {
     if (note.length > 0) {
       if (note.length == 1 || note.length > 3) {
@@ -31,7 +36,7 @@ class SongCompiler {
     } 
   }
 
-  def convertNote(note: String): Byte = {
+  def convertNote(note: String): Int = {
     if (note.length == 0) 0x00
     else {
       val octaveIndex = if (note.charAt(1) == '#') 2 else 1
@@ -40,45 +45,39 @@ class SongCompiler {
       val nibble1 = (noteIndex * 2) - (if (noteIndex < 3) 0 else 1) + (if (note.charAt(1) == '#') 2 else 1)
       val nibble2 = note.charAt(octaveIndex) - '0'
 
-      ((nibble1 << 4) | nibble2).toByte
+      ((nibble1 << 4) | nibble2)
     }
   }
 
   def checkBar(bar: List[String]) = bar.foreach(checkNote)
 
-  def convertBar(bar: List[String]): List[Byte] = bar.map(convertNote)
+  def convertBar(bar: List[String]): List[Int] = bar.map(convertNote)
 
-  def convertBytesToHex(bytes: List[Byte]): String = {
+  def convertBytesToHex(bytes: List[Int]): String = {
     val sb = new StringBuilder
     for (b <- bytes) {
-        sb.append(String.format("%02x ", Byte.box(b)))
+        sb.append(String.format("%02x ", Int.box(b)))
     }
     sb.toString
   }
 
+  def convertToUInt(bar: List[Int]): List[UInt] = bar.map(U(_, 8 bits))
+
   def printBar(bar: List[String]) = {
     println(convertBytesToHex(convertBar(bar)))
   }
-}
 
-object SongTest {
-  val bar0 = List.fill(16)("")
-  var bar1 = List("C2","","C2","","D2","","C2","","D#2","","C2","","F2","","D#2","")
-  var bar2 = List("F2","","F2","","G2","","F2","","G#2","","F2","","A#2","","G#2","")
-  var bar3 = List("G2","","G2","","A2","","G2","","A#2","","G2","","C3","","A#2","")
-
-  val pattern0 = List(1,0,0,0)
-  val pattern1 = List(2,0,0,0)
-  val pattern2 = List(3,0,0,0)
-
-  val song = List(pattern0, pattern1, pattern2)
-
-  def main(args: Array[String]) {
-    val compiler = new SongCompiler
-    List(bar0, bar1, bar2, bar3).foreach {
-      compiler.checkBar(_)
-      compiler.printBar(_)
-    }
+  // Instruments
+  def bass(dataBits: Int = 12): Voice = {
+    val voice = new Voice(outputBits = dataBits)
+    voice.io.pulseWidth :=  2048
+    voice.io.waveFormEnable := B"0110"
+    voice.io.attack := U"0100"
+    voice.io.decay := U"0010"
+    voice.io.sustain := U"0100"
+    voice.io.release := U"1100"
+    
+    voice
   }
 }
 
