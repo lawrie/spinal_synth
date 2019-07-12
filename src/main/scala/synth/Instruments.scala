@@ -41,4 +41,17 @@ object Instruments {
 
     voice
   }
+
+  def snare(dataBits: Int = 12): Voice = {
+    val voice = new Voice(outputBits = dataBits)
+    voice.io.pulseWidth := 400
+    voice.io.waveFormEnable := B"1000"
+    voice.io.attack := U"0010"
+    voice.io.decay := U"0010"
+    voice.io.sustain := U"0001"
+    voice.io.release := U"0100"
+    voice.io.toneFreq := 2000
+
+    voice
+  }
 }
