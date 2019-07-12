@@ -55,7 +55,7 @@ class SongTest extends PlayerComponent {
   val instrumentGate = Reg(Bits(numChannels bits))
 
   // Create the instruments
-  val bass = compiler.bass(dataBits)
+  val bass = Instruments.bass(dataBits)
   bass.io.sampleClk := io.sampleClk
   bass.io.gate := instrumentGate(0)
 
