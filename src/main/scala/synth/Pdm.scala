@@ -1,4 +1,4 @@
-package mylib
+package synth
 
 import spinal.core._
 import spinal.lib._
@@ -95,7 +95,7 @@ class PdmPlayer[T: Manifest](dataBits: Int = 12) extends Component {
 
 object PdmPlayer {
   def main(args: Array[String]) {
-    SpinalVerilog(new PdmPlayer[SongPlayer](dataBits = 12))
+    SpinalVerilog(new PdmPlayer[SongExample](dataBits = 12))
   }
 }
 
@@ -103,7 +103,7 @@ object PdmPlayerSim {
   import spinal.core.sim._
 
   def main(args: Array[String]) {
-    SimConfig.withWave.compile(new PdmPlayer[SongPlayer](dataBits = 12)).doSim{ dut =>
+    SimConfig.withWave.compile(new PdmPlayer[SongExample](dataBits = 12)).doSim{ dut =>
       dut.clockDomain.forkStimulus(100)
 
       dut.clockDomain.waitSampling(100000)

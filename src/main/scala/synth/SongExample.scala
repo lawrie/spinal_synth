@@ -1,9 +1,9 @@
-package mylib
+package synth
 
 import spinal.core._
 import spinal.lib._
 
-class SongPlayer() extends PlayerComponent {
+class SongExample() extends PlayerComponent {
   val dataBits = 12
   val freqBits = 16
   
