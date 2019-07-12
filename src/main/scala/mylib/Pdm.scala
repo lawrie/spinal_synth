@@ -31,11 +31,28 @@ class ClkDivider(divisor: Int) extends Component {
   io.cout := counter(27)
 }
 
-class PdmTest(dataBits: Int = 12) extends Component {
+abstract class PlayerComponent extends Component {
+    val io = new Bundle {
+    val sampleClk = in Bool
+    val tickClk = in Bool
+    val dout = out SInt(12 bits)
+    val diag = out Bits(8 bits)
+    val gate = in Bool
+    val switches = in Bits(4 bits)
+    val quadA = in Bool
+    val quadB = in Bool
+  }
+}
+
+class PdmPlayer[T: Manifest](dataBits: Int = 12) extends Component {
   val io = new Bundle {
     val clk = in Bool
     val audio = out Bool
     val leds = out Bits(8 bits)
+    val gate = in Bool
+    val switches = in Bits(4 bits)
+    val quadA = in Bool
+    val quadB = in Bool
   }
 
   val pdmClockDomain = new ClockDomain(
@@ -60,30 +77,33 @@ class PdmTest(dataBits: Int = 12) extends Component {
     val pdm = new Pdm(dataBits)
 
     val oneMHzArea = new ClockingArea(oneMHzDomain) {
-      val songPlayer = new SongPlayer(dataBits = 12)
-      songPlayer.io.sampleClk := sampleClk.io.cout
-      songPlayer.io.tickClk := tickClk.io.cout
+      val player = manifest[T].erasure.newInstance().asInstanceOf[PlayerComponent]
+      player.io.sampleClk := sampleClk.io.cout
+      player.io.tickClk := tickClk.io.cout
+      player.io.gate := io.gate
+      player.io.switches := io.switches
+      player.io.quadA := io.quadA
+      player.io.quadB := io.quadB
 
-      pdm.io.din := songPlayer.io.dout addTag(crossClockDomain)
-      io.leds := songPlayer.io.diag
+      pdm.io.din := player.io.dout addTag(crossClockDomain)
+      io.leds := player.io.diag
     }
 
-    //io.leds := pdm.io.accOut(12 downto 5).asBits
     io.audio := pdm.io.dout
   }
 }
 
-object PdmTest {
+object PdmPlayer {
   def main(args: Array[String]) {
-    SpinalVerilog(new PdmTest(12))
+    SpinalVerilog(new PdmPlayer[SongPlayer](dataBits = 12))
   }
 }
 
-object PdmSim {
+object PdmPlayerSim {
   import spinal.core.sim._
 
   def main(args: Array[String]) {
-    SimConfig.withWave.compile(new PdmTest(12)).doSim{ dut =>
+    SimConfig.withWave.compile(new PdmPlayer[SongPlayer](dataBits = 12)).doSim{ dut =>
       dut.clockDomain.forkStimulus(100)
 
       dut.clockDomain.waitSampling(100000)

@@ -1,4 +1,4 @@
-VERILOG ?= PdmTest.v
+VERILOG ?= PdmPlayer.v
 PCF = audio.pcf
 
 prog : bin/toplevel.bin

@@ -96,60 +96,28 @@ class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputB
   }
 }
 
-class ToneTest(outputBits: Int = 12) extends Component {
-  val io = new Bundle {
-    val clk = in Bool
-    val audio = out Bool
-    val leds = out Bits(8 bits)
-    val switches = in Bits(4 bits)
-    val quadA = in Bool
-    val quadB = in Bool
-  }
+class ToneTest extends PlayerComponent {
+  val quad = new Quad(12)
+  quad.io.initValue := 1000
+  quad.io.quadA := io.quadA
+  quad.io.quadB := io.quadB
 
-  val pdmClockDomain = new ClockDomain(
-    clock=io.clk,
-    config = ClockDomainConfig(resetKind=BOOT)
-  )
+  val toneGenerator = new ToneGenerator(outputBits = 12)
+  toneGenerator.io.sampleClk := io.sampleClk
+  toneGenerator.io.pulseWidth := quad.io.position
+  toneGenerator.io.toneFreq := 1000
+  toneGenerator.io.enPulse := io.switches(0)
+  toneGenerator.io.enNoise := io.switches(1)
+  toneGenerator.io.enSaw := io.switches(2)
+  toneGenerator.io.enTriangle := io.switches(3)
 
-  val pdmArea = new ClockingArea(pdmClockDomain) {
-
-    val clockHz = 100000000
-
-    val oneMHzClk = new ClkDivider(clockHz / 1000000)
-    val sampleClk = new ClkDivider(clockHz / 44100)
-
-    val oneMHzDomain = new ClockDomain(
-      clock=oneMHzClk.io.cout, 
-      config = ClockDomainConfig(resetKind=BOOT)
-    )
-    val pdm = new Pdm(outputBits)
-
-    val oneMHzArea = new ClockingArea(oneMHzDomain) {
-      val quad = new Quad(12)
-      quad.io.initValue := 1000
-      quad.io.quadA := io.quadA
-      quad.io.quadB := io.quadB
-    
-      val toneGenerator = new ToneGenerator(outputBits = outputBits)
-      toneGenerator.io.sampleClk := sampleClk.io.cout
-      toneGenerator.io.pulseWidth := quad.io.position
-      toneGenerator.io.toneFreq := 1000
-      toneGenerator.io.enPulse := io.switches(0)
-      toneGenerator.io.enNoise := io.switches(1)
-      toneGenerator.io.enSaw := io.switches(2)
-      toneGenerator.io.enTriangle := io.switches(3)
-
-      pdm.io.din := toneGenerator.io.dout addTag(crossClockDomain)
-      io.leds := toneGenerator.io.dout.asBits.resized
-    }
-
-    io.audio := pdm.io.dout
-  }
+  io.diag := 0
+  io.dout := toneGenerator.io.dout
 }
 
 object ToneTest {
   def main(args: Array[String]) {
-    SpinalVerilog(new ToneTest(12))
+    SpinalVerilog(new PdmPlayer[ToneTest]())
   }
 }
 
@@ -157,7 +125,7 @@ object ToneSim {
   import spinal.core.sim._
 
   def main(args: Array[String]) {
-    SimConfig.withWave.compile(new ToneTest(12)).doSim{ dut =>
+    SimConfig.withWave.compile(new PdmPlayer[ToneTest]()).doSim{ dut =>
       dut.clockDomain.forkStimulus(100)
 
       dut.clockDomain.waitSampling(100000)

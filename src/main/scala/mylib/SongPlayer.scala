@@ -3,14 +3,10 @@ package mylib
 import spinal.core._
 import spinal.lib._
 
-class SongPlayer(dataBits: Int = 12, freqBits: Int = 16) extends Component {
-  val io = new Bundle {
-    val sampleClk = in Bool
-    val tickClk = in Bool
-    val dout = out SInt(dataBits bits)
-    val diag = out Bits(8 bits)
-  }
-
+class SongPlayer() extends PlayerComponent {
+  val dataBits = 12
+  val freqBits = 16
+  
   // Song parameters
   val numRowsPerBar = 16
   val numBars = 8
