@@ -3,24 +3,35 @@ package synth
 import spinal.core._
 import spinal.lib._
 
-class Mixer(dataBits: Int = 12, activeChannels: Int = 2) extends Component {
+class Mixer(dataBits: Int = 12, numChannels: Int = 2, activeChannels: Int = 2) extends Component {
   val io = new Bundle {
-    val channel = in Vec(SInt(dataBits bits), activeChannels)
+    val channel = in Vec(SInt(dataBits bits), numChannels)
     val dout = out SInt(dataBits bits)
   }
-  
-  val extraBitsRequired = log2Up(activeChannels)
+
+  val maxValue = S((1 << dataBits) - 1)
+  val minValue = S(- (1 << (dataBits - 1)))
+
+  val extraBitsRequired = log2Up(numChannels)
   val n = dataBits + extraBitsRequired
 
-  val sum = Vec(SInt(n bits), activeChannels)
+  // Active channels is average number active and can be less than the
+  // number of channels. So shift can be less, than extraBitsRequired
+  // to avoid too much reduction in volume.
+  val shift = log2Up(activeChannels)
+
+  val sum = Vec(SInt(n bits), numChannels)
 
   sum(0)  := io.channel(0).resize(n)
 
-  for(i <- 1 until activeChannels) {
+  for(i <- 1 until numChannels) {
     sum(i) := sum(i-1) + io.channel(i).resize(n)
   }
 
-  io.dout := sum(activeChannels - 1) >> extraBitsRequired
+  // Sum might need truncating as could be bigger than the available bits due to short shift
+  val sumOut = sum(numChannels - 1) >> shift
+  val temp = (sumOut > maxValue) ? maxValue | sumOut
+  io.dout := ((temp < minValue) ? minValue | sumOut).resized
 }
 
 class MixerTest(dataBits: Int = 12, activeChannels: Int = 2) extends Component {
