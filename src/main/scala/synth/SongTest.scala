@@ -59,10 +59,11 @@ class SongTest extends PlayerComponent {
   bass.io.sampleClk := io.sampleClk
   bass.io.gate := instrumentGate(0)
 
+  val instrument = Array(bass)
+
   // Only one instrument for this song
   io.dout := bass.io.dout 
 
-  // Play the song in a slow tick domain
   val tickDomain = new ClockDomain(
     clock=io.tickClk,
     config=ClockDomainConfig(resetKind=BOOT)
@@ -96,7 +97,7 @@ class SongTest extends PlayerComponent {
     io.diag := currentNote(3).asBits
 
     // Set the bass frequency
-    bass.io.toneFreq := toneFreq addTag(crossClockDomain)
+    instrument(0).io.toneFreq := toneFreq addTag(crossClockDomain)
 
     tickTimer := tickTimer + 1
 
