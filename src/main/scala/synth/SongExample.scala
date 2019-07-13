@@ -90,7 +90,7 @@ class SongExample() extends PlayerComponent {
   filter.io.din := bass.io.dout
 
   // Mixer
-  val mixer = new Mixer(dataBits = dataBits, activeChannels = 5)
+  val mixer = new Mixer(dataBits = dataBits, numChannels=5, activeChannels = 2)
   mixer.io.channel(0) := filter.io.dout
   mixer.io.channel(1) := kickDrum.io.dout
   mixer.io.channel(2) := kickDrum2.io.dout
@@ -128,10 +128,7 @@ class SongExample() extends PlayerComponent {
       notesRom(note(7 downto 4)) |>> (6 - note(3 downto 0))
     }
 
-    //io.diag := (barPosition ## tickTimer).resized
-    //io.diag := songPosition.asBits.resized
     io.diag := currentNote(3).asBits
-    //io.diag := pattern.asBits
 
     bass.io.toneFreq := toneFreq addTag(crossClockDomain)
 
@@ -158,6 +155,12 @@ class SongExample() extends PlayerComponent {
     } elsewhen (tickTimer === 3) {
       gate := False
     }
+  }
+}
+
+object SongExample {
+  def main(args: Array[String]) {
+    SpinalVerilog(new PdmPlayer[SongExample](dataBits = 12))
   }
 }
 
