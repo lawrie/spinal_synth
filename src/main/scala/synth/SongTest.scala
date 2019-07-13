@@ -4,6 +4,8 @@ import spinal.core._
 import spinal.lib._
 
 class SongTest extends PlayerComponent {
+  val compiler = new SongCompiler
+
   // Song parameters
   val dataBits = 12
   val freqBits = 16
@@ -14,18 +16,34 @@ class SongTest extends PlayerComponent {
   val numPatterns = 10
   val songLength = 24
 
-  val compiler = new SongCompiler
-
   // The bars played by specific instruments
-  val bar0 = compiler.emptyBar
-  var bar1 = List("C2","","C2","","D2","","C2","","D#2","","C2","","F2","","D#2","")
-  var bar2 = List("F2","","F2","","G2","","F2","","G#2","","F2","","A#2","","G#2","")
-  var bar3 = List("G2","","G2","","A2","","G2","","A#2","","G2","","C3","","A#2","")
-  val bar4 = List("C3","","","","","","","","C3","","","","","","", "")
-  val bar5 = List("","","A6","","","","A6","","","","A6","","","","A6","")
-  var bar6 = List("","","","","C4","","","","","","","","C4","","","")
-  var bar7 = List("","","","","C4","","","","","","","","C4","","","C4")
-  val bars = List(bar0, bar1, bar2, bar3, bar4, bar5, bar6, bar7)
+  val bars = List(
+    List("",   "", "",   "", "",   "", "",   "", "",    "", "",   "", "",    "", "",    ""),  // Silent
+    List("C2", "", "C2", "", "D2", "", "C2", "", "D#2", "", "C2", "", "F2",  "", "D#2", ""),  // Bass
+    List("F2", "", "F2", "", "G2", "", "F2", "", "G#2", "", "F2", "", "A#2", "", "G#2", ""),  // Bass
+    List("G2", "", "G2", "", "A2", "", "G2", "", "A#2", "", "G2", "", "C3",  "", "A#2", ""),  // Bass
+    List("C3", "", "",   "", "",   "", "",   "", "C3",  "", "",   "", "",    "", "",    ""),  // Bass
+    List("",   "", "A6", "", "",   "", "A6", "", "",    "", "A6", "", "",    "", "A6",  ""),  // Kick drum
+    List("",   "", "",   "", "C4", "", "",   "", "",    "", "",   "", "C4",  "", "",    ""),  // High hat
+    List("",   "", "",   "", "C4", "", "",   "", "",    "", "",   "", "C4",  "", "",    "C4") // Snare drum
+  )
+  
+  // The patterns of which bars are played by which instrument
+  val patterns = List(
+    List(1, 0, 0, 0), // Bass only
+    List(2, 0, 0, 0), // Bass only
+    List(3, 0, 0, 0), // Bass only 
+    List(1, 4, 5, 6), // Bass and drums
+    List(2, 4, 5, 6), // Bass and drums
+    List(3, 4, 5, 6), // Bass and drums
+    List(1, 4, 5, 7), // Bass and drums
+    List(2, 4, 5, 7), // Bass and drums
+    List(3, 4, 5, 7), // Bass and drums
+    List(0, 0, 0, 0)  // Silent
+  ) 
+  
+  // The song is a cyclic sequence of patterns
+  val song = List(0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 0, 3, 6, 3, 6, 4, 7, 3, 6, 5, 7, 3, 6)
   
   // Check and print the bars
   for (bar <- bars) {
@@ -38,33 +56,16 @@ class SongTest extends PlayerComponent {
   val ubars = bars.map(compiler.convertBar).map(compiler.convertToUInt).flatten
   val barRom = Mem(UInt(8 bits), ubars)
 
-  // The patterns of which bars are played by which instrument
-  val patterns = List(
-    List(1, 0, 0, 0),
-    List(2, 0, 0, 0),         
-    List(3, 0, 0, 0),        
-    List(1, 4, 5, 6),
-    List(2, 4, 5, 6),
-    List(3, 4, 5, 6),
-    List(1, 4, 5, 7),
-    List(2, 4, 5, 7),
-    List(3, 4, 5, 7),
-    List(0, 0, 0, 0)
-  ) 
-  
-  // Create a row for the patterns
+  // Create a rom for the patterns
   var patternRom = Mem(UInt(8 bits), patterns.map(compiler.convertToUInt).flatten)
 
   // Create a rom for the note frequencies
   val notesRom = Mem(UInt(freqBits bits), compiler.notes)
 
-  // The song is a cyclic sequence of patterns
-  val song = List(0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 0, 3, 6, 3, 6, 4, 7, 3, 6, 5, 7, 3, 6)
-
   // Create a rom for the song
   val songRom = Mem(UInt(8 bits), song.map(U(_, 8 bits)))
 
-  // Each instrument has a gate to specify when it is played
+  // Each instrument has a gate to specify when it is played and a tone frequency
   val instrumentGate = Reg(Bits(numChannels bits))
   val instrumentFreq = Reg(Vec(UInt(freqBits bits), numChannels))
 
@@ -74,6 +75,7 @@ class SongTest extends PlayerComponent {
   bass.io.gate := instrumentGate(0)
   bass.io.toneFreq := instrumentFreq(0)
 
+  // Kick drum is two voices and a mixer
   val kickDrum1 = Instruments.kickDrum1(dataBits)
   kickDrum1.io.sampleClk := io.sampleClk
   kickDrum1.io.gate := instrumentGate(1)
@@ -94,17 +96,19 @@ class SongTest extends PlayerComponent {
   snare.io.sampleClk := io.sampleClk
   snare.io.gate := instrumentGate(3)
 
+  // Create an EWMA filter for the bass
   val filter = new FilterEwma(dataBits = dataBits)
   filter.io.sAlpha := 20
   filter.io.din := bass.io.dout
 
+  // Create a mixer to mix all the instruments
   val mixer = new Mixer(dataBits = dataBits, numChannels = 4, activeChannels = 2)
   mixer.io.channel(0) := bass.io.dout
   mixer.io.channel(1) := kickMixer.io.dout
   mixer.io.channel(2) := highHat.io.dout
   mixer.io.channel(3) := snare.io.dout
 
-  // Flanger
+  // Create a flanger
   val flanger = new Flanger(sampleBits = dataBits)
   flanger.io.sampleClk := io.sampleClk
   flanger.io.din := mixer.io.dout
@@ -112,6 +116,7 @@ class SongTest extends PlayerComponent {
   // Final mix
   io.dout := mixer.io.dout 
 
+  // Execute the song using the tick clock
   val tickDomain = new ClockDomain(
     clock=io.tickClk,
     config=ClockDomainConfig(resetKind=BOOT)
