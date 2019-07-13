@@ -29,7 +29,7 @@ class SongCompiler {
         val octaveIndex = if (note.charAt(1) == '#') 2 else 1
         val octaveChar = note.charAt(octaveIndex)
 
-        if (octaveChar >= '0' && octaveChar >= '6') {
+        if (octaveChar < '0' || octaveChar > '6') {
           println("Invalid octave")
         } 
       }
@@ -65,6 +65,10 @@ class SongCompiler {
 
   def printBar(bar: List[String]) = {
     println(convertBytesToHex(convertBar(bar)))
+  }
+
+  def checkLength(bar: List[String], reqLength: Int = 16) = {
+    if (bar.length != reqLength) println("Wrong bar length")
   }
 }
 

@@ -16,7 +16,7 @@ object Instruments {
     voice
   }
 
-  def kickDrum(dataBits: Int = 12): Voice = {
+  def kickDrum1(dataBits: Int = 12): Voice = {
     val voice = new Voice(outputBits = dataBits)
     voice.io.pulseWidth := 1000
     voice.io.waveFormEnable := B"0001"
@@ -25,6 +25,19 @@ object Instruments {
     voice.io.sustain := U"1111"
     voice.io.release := U"0110"
     voice.io.toneFreq := 1383
+
+    voice
+  }
+
+  def kickDrum2(dataBits: Int = 12): Voice = {
+    val voice = new Voice(outputBits = dataBits)
+    voice.io.pulseWidth := 1000
+    voice.io.waveFormEnable := B"1000"
+    voice.io.attack := U"0000"
+    voice.io.decay := U"0000"
+    voice.io.sustain := U"0010"
+    voice.io.release := U"0000"
+    voice.io.toneFreq := 18000
 
     voice
   }

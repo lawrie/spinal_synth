@@ -39,15 +39,22 @@ class ToneGeneratorSaw(accumulatorBits: Int = 24, outputBits: Int = 12) extends 
 
 class ToneGeneratorNoise(outputBits: Int = 12) extends Component {
   val io = new Bundle {
+    val accClk = in Bool
     val dout = out UInt(outputBits bits)
   }
 
-  val lfsr = Reg(Bits(23 bits)) init B"01101110010010000101011"
+  val accDomain = new ClockDomain(
+    clock=io.accClk,
+    config=ClockDomainConfig(resetKind=BOOT)
+  )
 
-  lfsr := lfsr(21 downto 0) ## (lfsr(22) ^ lfsr(17))
+  val accArea = new ClockingArea(accDomain) {
+    val lfsr = Reg(Bits(23 bits)) init B"01101110010010000101011"
 
-  io.dout := (lfsr(22) ## lfsr(20) ## lfsr(16) ## lfsr(13) ## lfsr(11) ## lfsr(7) ## lfsr(4) ## lfsr(2) ## B(0, outputBits - 8 bits)).asUInt
+    lfsr := lfsr(21 downto 0) ## (lfsr(22) ^ lfsr(17))
 
+    io.dout := (lfsr(22) ## lfsr(20) ## lfsr(16) ## lfsr(13) ## lfsr(11) ## lfsr(7) ## lfsr(4) ## lfsr(2) ## B(0, outputBits - 8 bits)).asUInt addTag(crossClockDomain)
+  }
 }
 
 class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputBits: Int = 12, freqBits: Int = 16) extends Component {
@@ -79,6 +86,7 @@ class ToneGenerator(accumulatorBits: Int = 24, pulseWidthBits: Int = 12, outputB
   saw.io.accumulator := accumulator
 
   val noise = new ToneGeneratorNoise(outputBits)
+  noise.io.accClk := accumulator(19)
 
   val sampleDomain = ClockDomain( clock=io.sampleClk)
 
