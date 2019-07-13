@@ -103,10 +103,12 @@ object PdmPlayerSim {
   import spinal.core.sim._
 
   def main(args: Array[String]) {
-    SimConfig.withWave.compile(new PdmPlayer[SongExample](dataBits = 12)).doSim{ dut =>
-      dut.clockDomain.forkStimulus(100)
+    SimConfig.withWave.compile(new PdmPlayer[NoteTest](dataBits = 12)).doSim{ dut =>
+      val clockDomain = ClockDomain(dut.io.clk)
 
-      dut.clockDomain.waitSampling(100000)
+      clockDomain.forkStimulus(100)
+
+      clockDomain.waitSampling(5000000)
     }
   }
 }

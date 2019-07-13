@@ -23,7 +23,7 @@ class ChordTest extends PlayerComponent {
   val voice2 = voice(5530)
   val voice3 = voice(6577)
 
-  val mixer = new Mixer(dataBits = 12, activeChannels = 3)
+  val mixer = new Mixer(dataBits = 12, numChannels = 3, activeChannels = 3)
   mixer.io.channel(0) := voice1.io.dout
   mixer.io.channel(1) := voice2.io.dout
   mixer.io.channel(2) := voice3.io.dout

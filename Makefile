@@ -10,7 +10,7 @@ bin/toplevel.json : ${VERILOG}
 	yosys -v3 -p "synth_ice40 -json bin/toplevel.json" ${VERILOG}
 
 bin/toplevel.asc : ${PCF} bin/toplevel.json
-	nextpnr-ice40 --freq 40 --hx8k --package tq144:4k --json bin/toplevel.json --pcf ${PCF} --asc bin/toplevel.asc --opt-timing
+	nextpnr-ice40 --freq 25 --hx8k --package tq144:4k --json bin/toplevel.json --pcf ${PCF} --asc bin/toplevel.asc --opt-timing
 
 bin/toplevel.bin : bin/toplevel.asc
 	icepack bin/toplevel.asc bin/toplevel.bin
