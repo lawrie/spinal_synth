@@ -1,5 +1,5 @@
 VERILOG ?= PdmPlayer.v
-PCF = audio.pcf
+PCF ?= audio.pcf
 
 prog : bin/toplevel.bin
 	stty -F /dev/ttyACM0 raw
