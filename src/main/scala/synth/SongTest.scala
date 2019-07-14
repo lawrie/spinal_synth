@@ -4,16 +4,12 @@ import spinal.core._
 import spinal.lib._
 
 class SongTest extends PlayerComponent {
-  val compiler = new SongCompiler
-
   // Song parameters
   val dataBits = 12
   val freqBits = 16
 
   val numRowsPerBar = 16
-  val numBars = 8
   val numChannels = 4
-  val numPatterns = 10
   val songLength = 24
 
   // The bars played by specific instruments
@@ -45,26 +41,6 @@ class SongTest extends PlayerComponent {
   // The song is a cyclic sequence of patterns
   val song = List(0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 0, 0, 3, 6, 3, 6, 4, 7, 3, 6, 5, 7, 3, 6)
   
-  // Check and print the bars
-  for (bar <- bars) {
-    compiler.checkLength(bar,numRowsPerBar)
-    compiler.checkBar(bar)
-    compiler.printBar(bar)
-  }
-
-  // Create a rom for the bars
-  val ubars = bars.map(compiler.convertBar).map(compiler.convertToUInt).flatten
-  val barRom = Mem(UInt(8 bits), ubars)
-
-  // Create a rom for the patterns
-  var patternRom = Mem(UInt(8 bits), patterns.map(compiler.convertToUInt).flatten)
-
-  // Create a rom for the note frequencies
-  val notesRom = Mem(UInt(freqBits bits), compiler.notes)
-
-  // Create a rom for the song
-  val songRom = Mem(UInt(8 bits), song.map(U(_, 8 bits)))
-
   // Each instrument has a gate to specify when it is played and a tone frequency
   val instrumentGate = Reg(Bits(numChannels bits))
   val instrumentFreq = Reg(Vec(UInt(freqBits bits), numChannels))
@@ -118,73 +94,22 @@ class SongTest extends PlayerComponent {
   io.dout := flanger.io.dout 
 
   // Execute the song using the tick clock
-  val tickDomain = new ClockDomain(
-    clock=io.tickClk,
-    config=ClockDomainConfig(resetKind=BOOT)
+  
+  val songPlayer = new SongPlayer(
+    freqBits = freqBits,
+    numChannels = numChannels,
+    numRowsPerBar = numRowsPerBar,
+    bars = bars,
+    patterns = patterns,
+    song = song
   )
+  songPlayer.io.tickClk := io.tickClk
+  
+  io.diag := songPlayer.io.diag
 
-  val tickArea = new ClockingArea(tickDomain) {
-    val toneFreq = Reg(Vec(UInt(freqBits bits), numChannels))
-    val tickTimer = Reg(UInt(3 bits)) init 0
-    val songPosition = Reg(UInt(log2Up(songLength) bits)) init 0
-    val barPosition = Reg(UInt(log2Up(numRowsPerBar) + 1 bits)) init 0
-    val gate = Reg(Bool)
-    val currentNote = Reg(Vec(UInt(8 bits), numChannels))
-    val pattern = Reg(UInt(8 bits))
-   
-    // Get the current pattern from the song rom
-    def currentPatternIdx(): UInt = songRom(songPosition)
-
-    // Get the current bar for a specific instrument
-    def currentBarForChannel(ch: UInt): UInt = patternRom(((pattern * numChannels) + ch).resized)
-
-    // Get the current note for a specific instrument
-    def currentNoteForChannel(ch: UInt): UInt = barRom(((currentBarForChannel(ch) * numRowsPerBar) + barPosition).resized)
-
-    // Get the currtent tone frequency for a specific instrument
-    def currentFreqForChannel(ch: UInt): UInt = {
-      val note = currentNoteForChannel(ch)
-      notesRom(note(7 downto 4)) |>> (6 - note(3 downto 0))
-    }
-
-    // Diagnostic leds
-    io.diag := currentNote(3).asBits
-
-    // Set the bass frequency
-    for (i <- 0 until numChannels) {
-      instrumentFreq(i) := ((currentNote(i) =/= 0) ? toneFreq(i) | 0) addTag(crossClockDomain)
-      instrumentGate(i) := (gate && currentNote(i) =/= 0) addTag(crossClockDomain)
-    }
-
-    tickTimer := tickTimer + 1
-
-    // Ticks are one eighth of a note
-    when (tickTimer === 0) {
-      // Update the bar poosition
-      barPosition := barPosition + 1
-      when (barPosition >= numRowsPerBar - 1) {
-        // Start a new bar
-        barPosition := 0
-        songPosition := songPosition + 1
-        when (songPosition >= songLength - 1) {
-          // Start at the beginning again
-          songPosition := 0
-        }
-      }
-      
-      // Save values in registers
-      gate := True
-
-      for(i <- 0 until numChannels) {
-        toneFreq(i) := currentFreqForChannel(i).resized
-        currentNote(i) := currentNoteForChannel(i)
-      }
-
-      pattern := currentPatternIdx
-    } elsewhen (tickTimer === 3) {
-      // Switch off the instrument half way through the ticks
-      gate := False
-    }
+  for(i <- 0 until numChannels) {
+    instrumentGate(i) := songPlayer.io.instrumentGate(i)
+    instrumentFreq(i) := songPlayer.io.instrumentFreq(i)
   }
 } 
   
