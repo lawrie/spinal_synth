@@ -5,7 +5,7 @@ import spinal.lib._
 
 class SongTest extends PlayerComponent {
   // Song parameters
-  val dataBits = 12
+  implicit val dataBits = 12
   val freqBits = 16
 
   val numRowsPerBar = 16
@@ -45,30 +45,25 @@ class SongTest extends PlayerComponent {
   val instrumentFreq = Reg(Vec(UInt(freqBits bits), numChannels))
 
   // Create the instruments
-  val bass = Instruments.bass(dataBits)
-  bass.io.sampleClk := io.sampleClk
+  val bass = Instruments.bass
   bass.io.gate := instrumentGate(0)
   bass.io.toneFreq := instrumentFreq(0)
 
   // Kick drum is two voices and a mixer
-  val kickDrum1 = Instruments.kickDrum1(dataBits)
-  kickDrum1.io.sampleClk := io.sampleClk
+  val kickDrum1 = Instruments.kickDrum1
   kickDrum1.io.gate := instrumentGate(1)
 
-  val kickDrum2 = Instruments.kickDrum2(dataBits)
-  kickDrum2.io.sampleClk := io.sampleClk
+  val kickDrum2 = Instruments.kickDrum2
   kickDrum2.io.gate := instrumentGate(1)
 
   val kickMixer = new Mixer(dataBits = dataBits, numChannels = 2, activeChannels = 2)
   kickMixer.io.channel(0) := kickDrum1.io.dout
   kickMixer.io.channel(1) := kickDrum2.io.dout
 
-  val highHat = Instruments.highHat(dataBits)
-  highHat.io.sampleClk := io.sampleClk
+  val highHat = Instruments.highHat
   highHat.io.gate := instrumentGate(2)
 
-  val snare = Instruments.snare(dataBits)
-  snare.io.sampleClk := io.sampleClk
+  val snare = Instruments.snare
   snare.io.gate := instrumentGate(3)
 
   // Create an EWMA filter for the bass

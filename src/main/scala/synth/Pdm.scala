@@ -32,7 +32,7 @@ class ClkDivider(divisor: Int) extends Component {
 }
 
 abstract class PlayerComponent extends Component {
-    val io = new Bundle {
+  val io = new Bundle {
     val sampleClk = in Bool
     val tickClk = in Bool
     val dout = out SInt(12 bits)
@@ -42,6 +42,8 @@ abstract class PlayerComponent extends Component {
     val quadA = in Bool
     val quadB = in Bool
   }
+
+  implicit val sampleClk = io.sampleClk
 }
 
 class PdmPlayer[T: Manifest](dataBits: Int = 12, clockHz : Int = 100000000) extends Component {

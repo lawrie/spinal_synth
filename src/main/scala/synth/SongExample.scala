@@ -4,7 +4,7 @@ import spinal.core._
 import spinal.lib._
 
 class SongExample() extends PlayerComponent {
-  val dataBits = 12
+  implicit val dataBits = 12
   val freqBits = 16
   
   // Song parameters
@@ -22,25 +22,20 @@ class SongExample() extends PlayerComponent {
   val instrumentFreq = Reg(Vec(UInt(freqBits bits), numChannels))
 
   // Voices
-  val bass = Instruments.bass(dataBits = dataBits)
-  bass.io.sampleClk := io.sampleClk
+  val bass = Instruments.bass
   bass.io.gate := instrumentGate(0)
   bass.io.toneFreq := instrumentFreq(0)
 
-  val kickDrum = Instruments.kickDrum1(dataBits = dataBits)
-  kickDrum.io.sampleClk := io.sampleClk
+  val kickDrum = Instruments.kickDrum1
   kickDrum.io.gate := instrumentGate(1)
 
-  val kickDrum2 = Instruments.kickDrum2(dataBits = dataBits)
-  kickDrum2.io.sampleClk := io.sampleClk
+  val kickDrum2 = Instruments.kickDrum2
   kickDrum2.io.gate := instrumentGate(1)
 
-  val highHat = Instruments.highHat(dataBits = dataBits)
-  highHat.io.sampleClk := io.sampleClk
+  val highHat = Instruments.highHat
   highHat.io.gate := instrumentGate(2)
 
-  val snare = Instruments.snare(dataBits = dataBits)
-  snare.io.sampleClk := io.sampleClk
+  val snare = Instruments.snare
   snare.io.gate := instrumentGate(3)
 
   // Filter
