@@ -39,7 +39,7 @@ class SongExample() extends PlayerComponent {
   snare.io.gate := instrumentGate(3)
 
   // Filter
-  val filter = new FilterEwma(dataBits = dataBits)
+  val filter = new FilterEwma
   filter.io.sAlpha := 20
   filter.io.din := bass.io.dout
   filter.io.sampleClk := io.sampleClk

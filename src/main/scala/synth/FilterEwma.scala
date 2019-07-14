@@ -3,7 +3,7 @@ package synth
 import spinal.core._
 import spinal.lib._
 
-class FilterEwma(dataBits: Int = 12) extends Component {
+class FilterEwma(implicit dataBits: Int = 12, sampleClk: Bool) extends Component {
   val io = new Bundle {
     val sampleClk = in Bool
     val sAlpha = in SInt(9 bits)
@@ -12,7 +12,7 @@ class FilterEwma(dataBits: Int = 12) extends Component {
   }
 
   val sampleDomain = new ClockDomain(
-    clock=io.sampleClk,
+    clock=sampleClk,
     config=ClockDomainConfig(resetKind=BOOT)
   )
 
