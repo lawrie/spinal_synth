@@ -44,10 +44,10 @@ class Envelope(accumulatorBits : Int = 26, sampleClkFreq: Int = 44100)  extends 
       (accumulatorSize.toDouble / (n * sampleClkFreq.toDouble)).toInt
     }
 
-    val attackIncs = Array(0.002, 0.008, 0.016, 0.024, 0.038, 0.056, 0.068, 0.080,
+    val attackIncs = List(0.002, 0.008, 0.016, 0.024, 0.038, 0.056, 0.068, 0.080,
                            0.1, 0.25, 0.5, 0.8, 1.0, 3.0, 5.0, 8.0)
 
-    val decayIncs = Array(0.006, 0.024, 0.048, 0.072, 0.114, 0.168, 0.204,
+    val decayIncs = List(0.006, 0.024, 0.048, 0.072, 0.114, 0.168, 0.204,
                         0.24, 0.3, 0.75, 1,5, 2.4, 3.0, 9.0, 15.0, 24.0)
 
     def attackTable = for(i <- 0 until 16) yield {

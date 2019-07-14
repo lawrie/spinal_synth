@@ -2,6 +2,8 @@ package synth
 
 import spinal.core._
 import spinal.lib._
+import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.StringBuilder
 
 class SongCompiler {
   val noteChars = "CDEFGAB"
@@ -69,6 +71,39 @@ class SongCompiler {
 
   def checkLength(bar: List[String], reqLength: Int = 16) = {
     if (bar.length != reqLength) println("Wrong bar length")
+  }
+
+  def convertPatterns(patternBytes: Array[BigInt], numChannels: Int): List[List[Int]] = {
+    val result = new ListBuffer[List[Int]]
+    for (i <- 0 until patternBytes.length / numChannels) {
+      val buffer = new ListBuffer[Int]
+      for(j <- 0 until numChannels) {
+        buffer.append(patternBytes(i * numChannels +j).toInt)
+      }
+      result.append(buffer.toList)
+    }
+    result.toList
+  }
+
+  val noteString = Array("", "C", "C#", "D", "D#", "E", "F", "G", "G#", "A", "A#", "B")
+  val octaveString = "0123456"
+
+  def convertBarBytes(barBytes: Array[BigInt], numRowsPerBar: Int) : List[List[String]] = {
+    val result = new ListBuffer[List[String]]
+    for (i <- 0 until barBytes.length / numRowsPerBar) {
+      val buffer = new ListBuffer[String]
+      for(j <- 0 until numRowsPerBar) {
+        val sb = new StringBuilder
+        val b = barBytes(i * numRowsPerBar +j).toInt
+        if (b != 0) {
+          sb.append(noteString(b >> 4))
+          sb.append(octaveString.charAt((b & 0xf)))
+        }
+        buffer.append(sb.toString())
+      }
+      result.append(buffer.toList)
+    }
+    result.toList
   }
 }
 
