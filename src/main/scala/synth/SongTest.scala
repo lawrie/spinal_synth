@@ -98,12 +98,13 @@ class SongTest extends PlayerComponent {
 
   // Create an EWMA filter for the bass
   val filter = new FilterEwma(dataBits = dataBits)
+  filter.io.sampleClk := io.sampleClk
   filter.io.sAlpha := 20
   filter.io.din := bass.io.dout
 
   // Create a mixer to mix all the instruments
   val mixer = new Mixer(dataBits = dataBits, numChannels = 4, activeChannels = 2)
-  mixer.io.channel(0) := bass.io.dout
+  mixer.io.channel(0) := filter.io.dout
   mixer.io.channel(1) := kickMixer.io.dout
   mixer.io.channel(2) := highHat.io.dout
   mixer.io.channel(3) := snare.io.dout
@@ -114,7 +115,7 @@ class SongTest extends PlayerComponent {
   flanger.io.din := mixer.io.dout
 
   // Final mix
-  io.dout := mixer.io.dout 
+  io.dout := flanger.io.dout 
 
   // Execute the song using the tick clock
   val tickDomain = new ClockDomain(

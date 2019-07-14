@@ -25,6 +25,9 @@ class Flanger(delayBufferLengthBits: Int = 8, sampleBits: Int = 12, sampleRate: 
     val dout = out SInt(sampleBits bits)
   }
 
+  val sampleDomain = new ClockDomain(clock=io.sampleClk) 
+
+  val sampleArea = new ClockingArea(sampleDomain) {
   val delayBufferLength = (1 << delayBufferLengthBits)
   val delayBufferMax = delayBufferLength - 1
 
@@ -53,9 +56,6 @@ class Flanger(delayBufferLengthBits: Int = 8, sampleBits: Int = 12, sampleRate: 
   delayBuffer.WDATA := io.din.resized
   delayTapOutput := delayBuffer.RDATA.resized
 
-  val sampleDomain = new ClockDomain(clock=io.sampleClk) 
-
-  val sampleArea = new ClockingArea(sampleDomain) {
     delayBufferWriteAddress := delayBufferWriteAddress + 1
     accumulator := accumulator + accumulatorPhaseIncrement
     
