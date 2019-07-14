@@ -1,0 +1,25 @@
+set_io io_clk 60
+
+set_io io_audio 141
+
+set_io -nowarn io_leds[0] 16
+set_io -nowarn io_leds[1] 15
+set_io -nowarn io_leds[2] 10
+set_io -nowarn io_leds[3] 9
+set_io -nowarn io_leds[4] 18
+set_io -nowarn io_leds[5] 17
+set_io -nowarn io_leds[6] 12
+set_io -nowarn io_leds[7] 11
+
+set_io -nowarn io_switches[0] 21
+set_io -nowarn io_switches[1] 22
+set_io -nowarn io_switches[2] 25
+set_io -nowarn io_switches[3] 26
+
+set_io -nowarn io_buttons[0] 52
+set_io -nowarn io_buttons[1] 49
+
+set_io -nowarn io_quadA 143
+set_io -nowarn io_quadB 142
+
+set_io -nowarn io_gate 52
