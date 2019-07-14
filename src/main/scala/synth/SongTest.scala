@@ -68,7 +68,6 @@ class SongTest extends PlayerComponent {
 
   // Create an EWMA filter for the bass
   val filter = new FilterEwma
-  filter.io.sampleClk := io.sampleClk
   filter.io.sAlpha := 20
   filter.io.din := bass.io.dout
 

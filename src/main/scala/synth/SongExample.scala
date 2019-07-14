@@ -42,7 +42,6 @@ class SongExample() extends PlayerComponent {
   val filter = new FilterEwma
   filter.io.sAlpha := 20
   filter.io.din := bass.io.dout
-  filter.io.sampleClk := io.sampleClk
 
   // Mixer
   val mixer = new Mixer(dataBits = dataBits, numChannels=5, activeChannels = 2)

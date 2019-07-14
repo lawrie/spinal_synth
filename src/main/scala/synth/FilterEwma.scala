@@ -5,7 +5,6 @@ import spinal.lib._
 
 class FilterEwma(implicit dataBits: Int = 12, sampleClk: Bool) extends Component {
   val io = new Bundle {
-    val sampleClk = in Bool
     val sAlpha = in SInt(9 bits)
     val din = in SInt(dataBits bits)
     val dout = out SInt(dataBits bits)
