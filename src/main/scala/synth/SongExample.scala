@@ -9,10 +9,8 @@ class SongExample() extends PlayerComponent {
   
   // Song parameters
   val numRowsPerBar = 16
-  val numBars = 8
   val numChannels = 4
   val numPatterns = 10
-  val songLength = 24
 
   val compiler = new SongCompiler()
 

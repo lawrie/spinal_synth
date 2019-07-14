@@ -44,7 +44,7 @@ abstract class PlayerComponent extends Component {
   }
 }
 
-class PdmPlayer[T: Manifest](dataBits: Int = 12) extends Component {
+class PdmPlayer[T: Manifest](dataBits: Int = 12, clockHz : Int = 100000000) extends Component {
   val io = new Bundle {
     val clk = in Bool
     val audio = out Bool
@@ -61,10 +61,8 @@ class PdmPlayer[T: Manifest](dataBits: Int = 12) extends Component {
   )
 
   val pdmArea = new ClockingArea(pdmClockDomain) {
-    val clockHz = 100000000
     val bpm = 120
     val tickHz = ((bpm * 4) / 60) * 8
-    //val tickHz = 1000000
 
     val oneMHzClk = new ClkDivider(clockHz / 1000000)
     val sampleClk = new ClkDivider(clockHz / 44100)

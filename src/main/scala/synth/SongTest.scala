@@ -10,7 +10,6 @@ class SongTest extends PlayerComponent {
 
   val numRowsPerBar = 16
   val numChannels = 4
-  val songLength = 24
 
   // The bars played by specific instruments
   val bars = List(
@@ -94,7 +93,6 @@ class SongTest extends PlayerComponent {
   io.dout := flanger.io.dout 
 
   // Execute the song using the tick clock
-  
   val songPlayer = new SongPlayer(
     freqBits = freqBits,
     numChannels = numChannels,
