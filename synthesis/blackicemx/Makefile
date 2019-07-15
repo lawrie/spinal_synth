@@ -1,5 +1,8 @@
-VERILOG ?= PdmPlayer.v
-PCF ?= audio.pcf
+VERILOG = ../../PdmPlayer.v
+PCF = audio.pcf
+DEVICE = hx8k
+PACKAGE = tq144:4k
+SCALA ?= SongTestMx
 
 prog : bin/toplevel.bin
 	stty -F /dev/ttyACM0 raw
@@ -7,14 +10,19 @@ prog : bin/toplevel.bin
 
 bin/toplevel.json : ${VERILOG}
 	mkdir -p bin
+	rm -f *.bin
+	cp ${VERILOG}*.bin . | true
 	yosys -v3 -p "synth_ice40 -json bin/toplevel.json" ${VERILOG}
 
 bin/toplevel.asc : ${PCF} bin/toplevel.json
-	nextpnr-ice40 --freq 25 --hx8k --package tq144:4k --json bin/toplevel.json --pcf ${PCF} --asc bin/toplevel.asc --opt-timing
+	nextpnr-ice40 --freq 20 --${DEVICE} --package ${PACKAGE} --json bin/toplevel.json --pcf ${PCF} --asc bin/toplevel.asc --opt-timing --placer heap
 
 bin/toplevel.bin : bin/toplevel.asc
 	icepack bin/toplevel.asc bin/toplevel.bin
 
+${VERILOG} :
+	(cd ../..; sbt "runMain synth.${SCALA}")
+  
 compile : bin/toplevel.bin
 
 time: bin/toplevel.bin
@@ -22,3 +30,7 @@ time: bin/toplevel.bin
 
 clean :
 	rm -rf bin
+	rm -f *.bin
+	rm ${VERILOG}
+	rm -f ${VERILOG}*.bin
+

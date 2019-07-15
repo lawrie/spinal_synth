@@ -104,10 +104,25 @@ class SongTest extends PlayerComponent {
     instrumentFreq(i) := songPlayer.io.instrumentFreq(i)
   }
 } 
-  
+
+// version for Blackice or Blackice II
 object SongTest {
   def main(args: Array[String]) {
     SpinalVerilog(new PdmPlayer[SongTest]())
+  }
+}
+
+// Version for TinyFPGA Bx
+object SongTestBx {
+  def main(args: Array[String]) {
+    SpinalVerilog(new PdmPlayer[SongTest](clockHz=16000000))
+  }
+}
+
+// Version for Blackice Mx
+object SongTestMx {
+  def main(args: Array[String]) {
+    SpinalVerilog(new PdmPlayer[SongTest](clockHz=25000000))
   }
 }
 
